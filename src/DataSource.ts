@@ -11,14 +11,15 @@ import {
 } from '@grafana/data';
 import {
   BackendDataSourceResponse,
+  BackendSrvRequest,
   FetchResponse,
   getBackendSrv,
   getTemplateSrv,
-  BackendSrvRequest,
 } from '@grafana/runtime';
 import { isArray, isObject } from 'lodash';
 import { lastValueFrom } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { match, P } from 'ts-pattern';
 import { ResponseParser } from './response_parser';
 import {
   GenericOptions,
@@ -31,7 +32,6 @@ import {
   QueryRequest,
   VariableQuery,
 } from './types';
-import { match, P } from 'ts-pattern';
 import { valueFromVariableWithMultiSupport } from './variable/valueFromVariableWithMultiSupport';
 
 export class DataSource extends DataSourceApi<GrafanaQuery, GenericOptions> {
@@ -68,7 +68,7 @@ export class DataSource extends DataSourceApi<GrafanaQuery, GenericOptions> {
 
     return lastValueFrom(
       this.doFetch<any[]>({
-        url: `${this.url}/query`,
+        url: `${this.url}?query`,
         data: request,
         method: 'POST',
       }).pipe(
@@ -138,7 +138,7 @@ export class DataSource extends DataSourceApi<GrafanaQuery, GenericOptions> {
 
     return lastValueFrom(
       this.doFetch<BackendDataSourceResponse>({
-        url: `${this.url}/variable`,
+        url: `${this.url}?variable`,
         data: variableQueryData,
         method: 'POST',
       }).pipe(map((response) => this.responseParser.transformMetricFindResponse(response)))
@@ -152,7 +152,7 @@ export class DataSource extends DataSourceApi<GrafanaQuery, GenericOptions> {
   ): Promise<Array<SelectableValue<string | number>>> {
     return lastValueFrom<Array<SelectableValue<string | number>>>(
       this.doFetch({
-        url: `${this.url}/metric-payload-options`,
+        url: `${this.url}?metric-payload-options`,
         data: {
           metric,
           payload: this.processPayload(payload, 'builder', undefined),
@@ -172,7 +172,7 @@ export class DataSource extends DataSourceApi<GrafanaQuery, GenericOptions> {
   listMetrics(target: string | number, payload?: string | { [key: string]: any }): Promise<MetricConfig[]> {
     return lastValueFrom<MetricConfig[]>(
       this.doFetch({
-        url: `${this.url}/metrics`,
+        url: `${this.url}?metrics`,
         data: {
           metric: target.toString() ? getTemplateSrv().replace(target.toString(), undefined, 'regex') : undefined,
           payload: payload ? this.processPayload(payload, 'builder', undefined) : undefined,
@@ -208,7 +208,7 @@ export class DataSource extends DataSourceApi<GrafanaQuery, GenericOptions> {
   getTagKeys(options?: any): Promise<MetricFindTagKeys[]> {
     return lastValueFrom(
       this.doFetch<MetricFindTagKeys[]>({
-        url: `${this.url}/tag-keys`,
+        url: `${this.url}?tag-keys`,
         method: 'POST',
         data: options,
       }).pipe(map((result) => result.data))
@@ -218,7 +218,7 @@ export class DataSource extends DataSourceApi<GrafanaQuery, GenericOptions> {
   getTagValues(options: any): Promise<MetricFindTagValues[]> {
     return lastValueFrom(
       this.doFetch<MetricFindTagValues[]>({
-        url: `${this.url}/tag-values`,
+        url: `${this.url}?tag-values`,
         method: 'POST',
         data: options,
       }).pipe(map((result) => result.data))
